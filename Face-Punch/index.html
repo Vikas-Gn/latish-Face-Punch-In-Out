@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance Portal</title>
+    <!-- Add face-api.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #ff6b6b;
+            --success: #2ecc71;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f8fafc;
+            --bg-dark: #1a202c;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.3s;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f6f9fc 0%, #edf2f7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            position: relative;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 30px 25px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .header h1 {
+            font-weight: 600;
+            font-size: 28px;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .header p {
+            font-weight: 300;
+            opacity: 0.8;
+        }
+        
+        .content {
+            padding: 30px 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideUp 0.4s ease-out forwards;
+            animation-delay: calc(var(--delay) * 0.1s);
+        }
+        
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 15px;
+            transition: all var(--transition-speed);
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            background-color: var(--bg-light);
+            transition: all var(--transition-speed);
+            color: var(--text-dark);
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+            background-color: white;
+        }
+        
+        .error {
+            color: var(--secondary);
+            font-size: 14px;
+            margin-top: 8px;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s;
+            z-index: -1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(66, 153, 225, 0.3);
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .camera-container {
+            display: none;
+            margin-top: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+        
+        .camera-container.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        #video {
+            width: 100%;
+            border-radius: 12px;
+            background-color: #f1f5f9;
+            transform: scaleX(-1); /* Mirror effect */
+            transition: all 0.3s;
+        }
+        
+        #canvas {
+            display: none;
+        }
+        
+        .captured-image {
+            display: none;
+            width: 100%;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .action-buttons {
+            display: none; /* Initially hidden */
+            gap: 15px;
+            margin-top: 20px;
+            transition: opacity 0.3s ease;
+        }
+        
+        .action-buttons.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .secondary-btn {
+            flex: 1;
+            background: linear-gradient(135deg, var(--secondary) 0%, #e53e3e 100%);
+        }
+        
+        .secondary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(229, 62, 62, 0.3);
+        }
+        
+        .primary-btn {
+            flex: 1;
+        }
+        
+        .success-message {
+            margin-top: 25px;
+            padding: 16px;
+            background-color: #def7ec;
+            color: #046c4e;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+            animation: fadeInUp 0.5s ease;
+            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .time-info {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: var(--bg-light);
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.2);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(66, 153, 225, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(66, 153, 225, 0);
+            }
+        }
+        
+        .time-info p {
+            margin: 8px 0;
+            color: var(--text-dark);
+        }
+        
+        .time-info .date {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--primary);
+        }
+        
+        .time-info .time {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 1px;
+        }
+        
+        .time-info .status {
+            display: inline-block;
+            font-weight: 500;
+            border-radius: 30px;
+            padding: 5px 15px;
+            font-size: 14px;
+            background-color: #f1f5f9;
+            color: var(--text-light);
+            margin-top: 8px;
+            transition: all 0.3s;
+        }
+        
+        .time-info .status.in {
+            background-color: #def7ec;
+            color: #046c4e;
+        }
+        
+        .time-info .status.out {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .header p {
+                font-size: 14px;
+            }
+            
+            .content {
+                padding: 25px 20px;
+            }
+            
+            input, .btn {
+                padding: 12px 16px;
+            }
+            
+            .time-info .time {
+                font-size: 24px;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Camera Effects */
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            box-sizing: border-box;
+            z-index: 2;
+            opacity: 0.7;
+        }
+        
+        .camera-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: white;
+            border-style: solid;
+            border-width: 3px;
+            z-index: 3;
+        }
+        
+        .top-left {
+            top: 15px;
+            left: 15px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .top-right {
+            top: 15px;
+            right: 15px;
+            border-left: none;
+            border-bottom: none;
+        }
+        
+        .bottom-left {
+            bottom: 15px;
+            left: 15px;
+            border-right: none;
+            border-top: none;
+        }
+        
+        .bottom-right {
+            bottom: 15px;
+            right: 15px;
+            border-left: none;
+            border-top: none;
+        }
+        
+        .pulse-circle {
+            position: absolute;
+            z-index: 3;
+            width: 80px;
+            height: 80px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            opacity: 0;
+        }
+        
+        .pulse-animation {
+            animation: pulse-camera 1s ease-out;
+        }
+        
+        @keyframes pulse-camera {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Employee Attendance</h1>
+            <p>Check in and out with ease</p>
+        </div>
+        
+        <div class="content">
+            <div id="login-form">
+                <div class="form-group" style="--delay: 1">
+                    <label for="employee-id">Employee ID</label>
+                    <div class="input-group">
+                        <input type="text" id="employee-id" placeholder="Enter your Employee ID (ATS0XXX)">
+                    </div>
+                    <div class="error" id="id-error">Please enter a valid Employee ID (Format: ATS0XXX where XXX is 001-999)</div>
+                </div>
+                
+                <div class="form-group" style="--delay: 2">
+                    <button id="login-btn" class="btn">
+                        <span>Login</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="attendance-actions" style="display: none;">
+                <div class="time-info">
+                    <p class="date" id="current-date"></p>
+                    <p class="time" id="current-time"></p>
+                    <p><span class="status" id="status-text">Not punched in</span></p>
+                </div>
+                
+                <div class="form-group" style="--delay: 1; margin-top: 25px;">
+                    <button id="punch-btn" class="btn">Punch In</button>
+                </div>
+                
+                <div class="camera-container" id="camera-container">
+                    <div style="position: relative;">
+                        <video id="video" autoplay playsinline muted></video>
+                        <canvas id="canvas"></canvas>
+                        <img id="captured-image" class="captured-image">
+                        
+                        <div class="camera-overlay"></div>
+                        <div class="camera-corner top-left"></div>
+                        <div class="camera-corner top-right"></div>
+                        <div class="camera-corner bottom-left"></div>
+                        <div class="camera-corner bottom-right"></div>
+                        <div class="pulse-circle" id="pulse-circle"></div>
+                    </div>
+                    
+                    <div class="action-buttons" id="capture-actions">
+                        <button id="capture-btn" class="btn primary-btn">Capture</button>
+                    </div>
+                    
+                    <div class="action-buttons" id="post-capture-actions" style="display: none;">
+                        <button id="retake-btn" class="btn secondary-btn">Retake</button>
+                        <button id="confirm-btn" class="btn primary-btn">Confirm</button>
+                    </div>
+                </div>
+                
+                <div class="success-message" id="success-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const loginForm = document.getElementById('login-form');
+        const attendanceActions = document.getElementById('attendance-actions');
+        const employeeIdInput = document.getElementById('employee-id');
+        const idError = document.getElementById('id-error');
+        const loginBtn = document.getElementById('login-btn');
+        const punchBtn = document.getElementById('punch-btn');
+        const cameraContainer = document.getElementById('camera-container');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const capturedImage = document.getElementById('captured-image');
+        const captureBtn = document.getElementById('capture-btn');
+        const postCaptureActions = document.getElementById('post-capture-actions');
+        const captureActions = document.getElementById('capture-actions');
+        const retakeBtn = document.getElementById('retake-btn');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const successMessage = document.getElementById('success-message');
+        const currentDateEl = document.getElementById('current-date');
+        const currentTimeEl = document.getElementById('current-time');
+        const statusTextEl = document.getElementById('status-text');
+        const pulseCircle = document.getElementById('pulse-circle');
+
+        // Variables
+        let currentEmployeeId = '';
+        let punchInTime = null;
+        let punchOutTime = null;
+        let mediaStream = null;
+        let isPunchedIn = false;
+        let capturedImageData = '';
+        let faceDetectionInterval = null;
+        let modelsLoaded = false;
+        let punchInLocation = null;
+        let watchId = null;
+
+        // API base URL
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateEl.textContent = now.toLocaleDateString('en-US', options);
+            currentTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Validate employee ID
+        function validateEmployeeId(id) {
+            const regex = /^ATS0(?!000)\d{3}$/;
+            return regex.test(id);
+        }
+
+        // Calculate distance between two coordinates using Haversine formula
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in meters
+        }
+
+        // Get current location
+        async function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation is not supported by this browser.');
+                }
+                navigator.geolocation.getCurrentPosition(
+                    position => resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }),
+                    error => reject('Unable to retrieve location: ' + error.message)
+                );
+            });
+        }
+
+        // Start monitoring location for auto punch-out
+        function startLocationMonitoring() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            watchId = navigator.geolocation.watchPosition(
+                position => {
+                    if (isPunchedIn && punchInLocation) {
+                        const currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                        const distance = calculateDistance(
+                            punchInLocation.latitude,
+                            punchInLocation.longitude,
+                            currentLocation.latitude,
+                            currentLocation.longitude
+                        );
+                        if (distance > 200) { // 200 meters threshold
+                            // Automatically punch out
+                            initCamera();
+                        }
+                    }
+                },
+                error => {
+                    console.error('Location monitoring error:', error.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // Load face-api.js models
+        async function loadFaceApiModels() {
+            try {
+                const modelUrl = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/';
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl)
+                ]);
+                console.log('Face-api.js models loaded successfully');
+                modelsLoaded = true;
+            } catch (err) {
+                console.error('Error loading face-api.js models:', err);
+                alert('Failed to load face detection models. Please try again later.');
+                modelsLoaded = false;
+                punchBtn.innerHTML = isPunchedIn ? 'Punch Out' : 'Punch In';
+            }
+        }
+
+        // Check available media devices
+        async function checkAvailableCameras(requirePermission = false) {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                console.log('Available cameras:', videoDevices);
+                if (videoDevices.length === 0 && !requirePermission) {
+                    // Try again after requesting a stream to trigger permissions
+                    await navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(stream => {
+                        stream.getTracks().forEach(track => track.stop());
+                    });
+                    return checkAvailableCameras(true);
+                }
+                return videoDevices.length > 0 ? videoDevices : null;
+            } catch (err) {
+                console.error('Error enumerating devices:', err);
+                return null;
+            }
+        }
+
+        // Initialize camera and face detection
+        async function initCamera() {
+            try {
+                punchBtn.innerHTML = '<span class="loading"></span> Accessing camera...';
+
+                // Check secure context
+                if (!window.isSecureContext) {
+                    throw new Error('SecurityError: Camera access requires a secure context (HTTPS or localhost).');
+                }
+
+                // Load face-api.js models
+                await loadFaceApiModels();
+                if (!modelsLoaded) {
+                    throw new Error('Face detection models failed to load.');
+                }
+
+                // Check available cameras
+                const cameras = await checkAvailableCameras();
+                if (!cameras) {
+                    if (confirm('No cameras found. Proceed without capturing an image?')) {
+                        capturedImageData = null;
+                        punchBtn.style.display = 'none';
+                        postCaptureActions.style.display = 'flex';
+                        captureActions.style.display = 'none';
+                        return;
+                    } else {
+                        throw new Error('NotFoundError: No cameras found on this device.');
+                    }
+                }
+
+                // Try accessing camera with minimal constraints
+                console.log('Requesting camera with constraints:', { video: true, audio: false });
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true,
+                    audio: false 
+                });
+
+                // Wait briefly to ensure stream stability
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Verify stream tracks
+                const videoTracks = mediaStream.getVideoTracks();
+                if (!videoTracks.length) {
+                    throw new Error('No video tracks available in the stream.');
+                }
+                console.log('Video track settings:', videoTracks[0].getSettings());
+
+                // Assign stream to video element
+                video.srcObject = mediaStream;
+
+                // Handle video errors
+                video.onerror = () => {
+                    console.error('Video element error:', video.error ? video.error.message : 'Unknown error');
+                    throw new Error('Video element failed to load stream.');
+                };
+
+                // Wait for video metadata to load
+                await new Promise((resolve, reject) => {
+                    video.onloadedmetadata = () => {
+                        console.log('Video stream loaded:', video.videoWidth, 'x', video.videoHeight);
+                        resolve();
+                    };
+                    video.onerror = () => {
+                        reject(new Error('Video element failed to load stream.'));
+                    };
+                    setTimeout(() => reject(new Error('Timeout waiting for video metadata.')), 5000);
+                });
+
+                // Attempt to play video
+                try {
+                    await video.play();
+                    console.log('Video playback started successfully');
+                } catch (playErr) {
+                    console.error('Video playback error:', playErr);
+                    throw new Error(`Failed to play video stream: ${playErr.message}`);
+                }
+
+                // Start face detection
+                startFaceDetection();
+                cameraContainer.style.display = 'block';
+                setTimeout(() => {
+                    cameraContainer.classList.add('show');
+                }, 50);
+                postCaptureActions.style.display = 'none';
+                capturedImage.style.display = 'none';
+                video.style.display = 'block';
+                punchBtn.style.display = 'none';
+            } catch (err) {
+                console.error('Error accessing camera:', err.name, err.message);
+                let errorMessage = 'Could not access camera: ';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += 'Please grant camera permissions and try again.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage += 'No camera found. Please ensure a camera is connected.';
+                } else if (err.name === 'NotSupportedError') {
+                    errorMessage += 'No supported camera source found. Try using a different device or browser.';
+                } else if (err.name === 'SecurityError') {
+                    errorMessage += 'Camera access is only allowed in secure contexts (HTTPS or localhost).';
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage += 'Camera constraints are not supported by this device.';
+                } else {
+                    errorMessage += err.message || 'An unexpected error occurred.';
+                }
+                alert(errorMessage);
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+                punchBtn.innerHTML = isPunchedIn ? 'Punch Out' : 'Punch In';
+                video.onerror = null; // Clean up error handler
+            }
+        }
+
+        // Start face detection
+        function startFaceDetection() {
+            if (!modelsLoaded) {
+                console.error('Models not loaded, cannot start face detection');
+                return;
+            }
+            faceDetectionInterval = setInterval(async () => {
+                if (video.readyState === 4) {
+                    try {
+                        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+                        if (detections.length > 0) {
+                            captureActions.classList.add('show');
+                        } else {
+                            captureActions.classList.remove('show');
+                        }
+                    } catch (err) {
+                        console.error('Error during face detection:', err);
+                    }
+                }
+            }, 500);
+        }
+
+        // Stop camera and face detection
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            if (faceDetectionInterval) {
+                clearInterval(faceDetectionInterval);
+                faceDetectionInterval = null;
+            }
+            cameraContainer.classList.remove('show');
+            setTimeout(() => {
+                cameraContainer.style.display = 'none';
+            }, 400);
+            video.onerror = null; // Clean up error handler
+        }
+
+        // Capture image
+        function captureImage() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const shutterSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqq1dXV1f///////////////////8AAAABJbmZvAAAADwAAAAMAAQEAAEBAQGBgYGD///////////////////8AAAAACQAAAAEAAAD/MkxURVIAAAASAAAAAW1wNGEubXA0YS5NUDRBAAAAOUdJRlR5cGVtcDRhLm1wNGEuTVA0QQAAADhtcDRhLm1wNGEgQ29udmVyc2lvbiBieSBHSUZDb252ZXJ0ZXIuY29tAP/jOMIAT+B2UG93ZXJlZD7/NkOUaQY4AX8AfwN/AH8AfwF/AP8jQfAXf+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBVEUzLjk5LjVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/4xjEEAAADSAAAAAATEFURTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf+MYxB4AAANCAAAAAE1BVEUAAANPT1BVU1RFTVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxDAAAAMkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+            shutterSound.play();
+            
+            pulseCircle.classList.add('pulse-animation');
+            setTimeout(() => {
+                pulseCircle.classList.remove('pulse-animation');
+            }, 1000);
+            
+            capturedImageData = canvas.toDataURL('image/png');
+            capturedImage.src = capturedImageData;
+            
+            capturedImage.style.display = 'block';
+            video.style.display = 'none';
+            
+            captureActions.classList.remove('show');
+            postCaptureActions.style.display = 'flex';
+        }
+
+        // Retake image
+        function retakeImage() {
+            capturedImage.style.display = 'none';
+            video.style.display = 'block';
+            captureActions.classList.add('show');
+            postCaptureActions.style.display = 'none';
+            startFaceDetection();
+        }
+
+        // Save attendance data to backend
+        async function saveAttendanceData(type, location = null) {
+            confirmBtn.innerHTML = '<span class="loading"></span> Processing...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/punch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employeeId: currentEmployeeId,
+                        type: type,
+                        imageData: capturedImageData || null,
+                        location: type === 'punchin' ? location : punchInLocation
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to record attendance');
+                }
+                
+                if (type === 'punchin') {
+                    successMessage.textContent = '✅ Successfully punched in!';
+                    statusTextEl.textContent = 'Punched in';
+                    statusTextEl.className = 'status in';
+                    punchBtn.textContent = 'Punch Out';
+                    isPunchedIn = true;
+                    punchInLocation = location;
+                    startLocationMonitoring();
+                } else {
+                    successMessage.textContent = '✅ Successfully punched out!';
+                    statusTextEl.textContent = 'Punched out';
+                    statusTextEl.className = 'status out';
+                    punchBtn.textContent = 'Punch In';
+                    isPunchedIn = false;
+                    punchInLocation = null;
+                    if (watchId) {
+                        navigator.geolocation.clearWatch(watchId);
+                        watchId = null;
+                    }
+                }
+                
+                successMessage.style.display = 'block';
+                
+                stopCamera();
+                punchBtn.style.display = 'block';
+                confirmBtn.innerHTML = 'Confirm';
+                
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+            } catch (err) {
+                console.error('Error saving attendance:', err);
+                alert(err.message || 'Failed to record attendance. Please try again.');
+                confirmBtn.innerHTML = 'Confirm';
+            }
+        }
+
+        // Event listeners
+        loginBtn.addEventListener('click', async () => {
+            const employeeId = employeeIdInput.value.trim();
+            
+            if (validateEmployeeId(employeeId)) {
+                loginBtn.innerHTML = '<span class="loading"></span> Logging in...';
+                
+                try {
+                    const loginResponse = await fetch(`${API_BASE_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ employeeId })
+                    });
+                    
+                    const loginData = await loginResponse.json();
+                    
+                    if (!loginResponse.ok) {
+                        throw new Error(loginData.error || 'Login failed');
+                    }
+                    
+                    currentEmployeeId = employeeId;
+                    
+                    loginForm.style.opacity = '0';
+                    loginForm.style.transform = 'translateY(-20px)';
+                    
+                    setTimeout(() => {
+                        loginForm.style.display = 'none';
+                        attendanceActions.style.display = 'block';
+                        
+                        setTimeout(async () => {
+                            attendanceActions.style.opacity = '1';
+                            attendanceActions.style.transform = 'translateY(0)';
+                            
+                            try {
+                                const statusResponse = await fetch(`${API_BASE_URL}/employee-status/${currentEmployeeId}`);
+                                const statusData = await statusResponse.json();
+                                
+                                if (!statusResponse.ok) {
+                                    throw new Error(statusData.error || 'Failed to fetch status');
+                                }
+                                
+                                if (statusData.isPunchedIn) {
+                                    punchBtn.textContent = 'Punch Out';
+                                    statusTextEl.textContent = 'Punched in';
+                                    statusTextEl.className = 'status in';
+                                    isPunchedIn = true;
+                                    punchInLocation = statusData.location;
+                                    if (statusData.isPunchedIn) {
+                                        startLocationMonitoring();
+                                    }
+                                } else {
+                                    punchBtn.textContent = 'Punch In';
+                                    statusTextEl.textContent = 'Not punched in';
+                                    statusTextEl.className = 'status';
+                                    isPunchedIn = false;
+                                    punchInLocation = null;
+                                }
+                                
+                                loginBtn.innerHTML = 'Login';
+                            } catch (err) {
+                                console.error('Status fetch error:', err);
+                                alert(err.message || 'Failed to fetch employee status.');
+                                loginBtn.innerHTML = 'Login';
+                            }
+                        }, 50);
+                    }, 300);
+                } catch (err) {
+                    console.error('Login error:', err);
+                    idError.textContent = err.message || 'Login failed. Please try again.';
+                    idError.classList.add('show');
+                    employeeIdInput.style.borderColor = 'var(--secondary)';
+                    employeeIdInput.style.boxShadow = '0 0 0 3px rgba(229, 62, 62, 0.15)';
+                    loginBtn.innerHTML = 'Login';
+                }
+            } else {
+                idError.classList.add('show');
+                employeeIdInput.style.borderColor = 'var(--secondary)';
+                employeeIdInput.style.boxShadow = '0 0 0 3px rgba(229, 62, 62, 0.15)';
+            }
+        });
+
+        employeeIdInput.addEventListener('input', () => {
+            idError.classList.remove('show');
+            employeeIdInput.style.borderColor = '#e2e8f0';
+            employeeIdInput.style.boxShadow = 'none';
+        });
+
+        punchBtn.addEventListener('click', () => {
+            const action = isPunchedIn ? 'Punch Out' : 'Punch In';
+            if (confirm(`${action} now?`)) {
+                // OK clicked, proceed with location tracking and camera
+                getCurrentLocation()
+                    .then(location => {
+                        // Store location for punch-in
+                        if (!isPunchedIn) {
+                            punchInLocation = location;
+                        }
+                        initCamera();
+                    })
+                    .catch(err => {
+                        alert(err);
+                        punchBtn.innerHTML = isPunchedIn ? 'Punch Out' : 'Punch In';
+                    });
+            } else {
+                // Cancel clicked, reset button
+                punchBtn.innerHTML = isPunchedIn ? 'Punch Out' : 'Punch In';
+            }
+        });
+
+        captureBtn.addEventListener('click', captureImage);
+        retakeBtn.addEventListener('click', retakeImage);
+
+        confirmBtn.addEventListener('click', () => {
+            const actionType = isPunchedIn ? 'punchout' : 'punchin';
+            getCurrentLocation()
+                .then(location => {
+                    saveAttendanceData(actionType, actionType === 'punchin' ? location : punchInLocation);
+                })
+                .catch(err => {
+                    alert(err);
+                    confirmBtn.innerHTML = 'Confirm';
+                });
+        });
+        
+        // Set initial styles for animation
+        attendanceActions.style.opacity = '0';
+        attendanceActions.style.transform = 'translateY(20px)';
+        attendanceActions.style.transition = 'all var(--transition-speed)';
+    </script>
+</body>
+</html>
