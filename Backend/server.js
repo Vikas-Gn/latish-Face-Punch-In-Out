@@ -240,5 +240,5 @@ app.get('/api/employee-status/:employeeId', async (req, res) => {
 
 // Start server
 app.listen(port, () => {
-    console.log(`Server running at http://13.235.128.250:${port}`);
+    console.log(`Server running at http://13.234.33.38:${port}`);
 });
